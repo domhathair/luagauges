@@ -105,7 +105,7 @@ You can run `example.lua` to see all gauges in action.
 lua draw.lua
 ```
 
-![](images/plot.png)
+![](images/example.png)
 
 ## Requirements
 
