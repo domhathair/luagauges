@@ -5,16 +5,16 @@ It is intended for building graphical instrument panels, dashboards, or data vis
 
 ## Features
 
-- **Analog Circular Gauge** – classic dial with ticks, labels, and a needle.
+- **Analog Circular Gauge** – classic dial with ticks, labels, and a needle.  
   ![](images/analogcircular.png)
 
-- **Digit Meter** – seven-segment style digital display.
+- **Digit Meter** – seven-segment style digital display.  
   ![](images/digitmeter.png)
 
-- **Thermometer** – vertical fluid tube with ticks, labels, and digital readout.
+- **Thermometer** – vertical fluid tube with ticks, labels, and digital readout.  
   ![](images/thermometer.png)
 
-- **Plot** – scrolling live data graph with axes, ticks, labels, and title.
+- **Plot** – scrolling live data graph with axes, ticks, labels, and title.  
   ![](images/plot.png)
 
 All components are configurable with parameters and masks to enable or disable parts of the rendering.
