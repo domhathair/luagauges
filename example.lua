@@ -31,7 +31,7 @@ function cv1:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
 
-    gauges.digitmeter(self, cur, { format = "%05.1f" })
+    gauges.digitmeter(self, cur, { format = "%04.1f" })
 
     iup.DrawEnd(self)
 end
@@ -114,7 +114,7 @@ iup.timer {
         gauges.append("A", t, sin)
         gauges.append("B", t, cos)
 
-        cur = sin - cos
+        cur = sin * cos
     end
 }
 

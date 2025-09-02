@@ -3,16 +3,29 @@
 local iup = require("iuplua")
 local gauges = {}
 
+-- Math helpers
+
+---Clamp value to [min, max] and normalize to 0..1
 ---@param min number
 ---@param max number
----@param cur number
----@return number
-function gauges.norm(min, max, cur)
-    if cur < min then cur = min end
-    if cur > max then cur = max end
-    return (cur - min) / (max - min)
+---@param value number
+---@return number ratio -- value mapped to 0..1 inside the range
+function gauges.norm(min, max, value)
+    if value < min then value = min end
+    if value > max then value = max end
+    return (value - min) / (max - min)
 end
 
+---Lua 5.1/>5.1 compatibility for table.unpack
+---@param ... any
+function gauges.unpack(...)
+    local fn = _G.table and table.unpack or unpack
+    return fn(...)
+end
+
+-- Canvas helpers (typed wrappers around IUP Draw* API)
+
+---Set draw color/width/style on canvas.
 ---@param self canvas
 ---@param color? string|"0 0 0"
 ---@param width? integer
@@ -23,14 +36,15 @@ function gauges.style(self, color, width, style)
     if style then self.drawstyle = style end
 end
 
+---Temporarily override text style while running a function.
 ---@param self canvas
----@param opts table
----@param fn function
+---@param opts {alignment?:string, wrap?:string, ellipsis?:string}
+---@param fn fun()
 function gauges.textstyle(self, opts, fn)
     local old              = {
         alignment = self.drawtextalignment,
-        wrap = self.drawtextwrap,
-        ellipsis = self.drawtextellipsis,
+        wrap      = self.drawtextwrap,
+        ellipsis  = self.drawtextellipsis,
     }
     self.drawtextalignment = opts.alignment or old.alignment
     self.drawtextwrap      = opts.wrap or old.wrap
@@ -43,35 +57,7 @@ function gauges.textstyle(self, opts, fn)
     self.drawtextellipsis  = old.ellipsis
 end
 
----@param ... any
-function gauges.unpack(...)
-    local fn = _G.table and table.unpack or unpack
-    return fn(...)
-end
-
----@param t? table #Table to `iup.canvas`
----@param n string #Name of function to be called
----@param ... any  #Arguments to `gauges.call(...)`
----@return canvas
-function gauges.canvas(t, n, ...)
-    local cv = iup.canvas(t and t or {})
-    local params = { ... }
-
-    function cv:action()
-        iup.DrawBegin(self)
-        iup.DrawParentBackground(self)
-
-        local fn = gauges[n]
-        if type(fn) == "function" then
-            fn(self, unpack(params))
-        end
-
-        iup.DrawEnd(self)
-    end
-
-    return cv;
-end
-
+---Draw a line (coords are floored for crisp pixels).
 ---@param self canvas
 ---@param x1 number
 ---@param y1 number
@@ -86,6 +72,7 @@ function gauges.drawline(self, x1, y1, x2, y2)
     )
 end
 
+---Draw a rectangle (inclusive corners).
 ---@param self canvas
 ---@param x1 number
 ---@param y1 number
@@ -100,6 +87,7 @@ function gauges.drawrectangle(self, x1, y1, x2, y2)
     )
 end
 
+---Draw an arc inside given box; angles are optional.
 ---@param self canvas
 ---@param x1 number
 ---@param y1 number
@@ -113,21 +101,21 @@ function gauges.drawarc(self, x1, y1, x2, y2, a1, a2)
         math.floor(y1),
         math.floor(x2),
         math.floor(y2),
-        a1 and math.floor(a1) or 0,
-        a2 and math.floor(a2) or 360
+        a1 or 0,
+        a2 or 360
     )
 end
 
+---Draw a polygon from a numeric array.
 ---@param self canvas
 ---@param points number[]
 function gauges.drawpolygon(self, points)
     local floor = {}
-    for _, p in ipairs(points) do
-        table.insert(floor, math.floor(p))
-    end
+    for _, p in ipairs(points) do table.insert(floor, math.floor(p)) end
     self:DrawPolygon(floor)
 end
 
+---Draw text with optional bounding box.
 ---@param self canvas
 ---@param str string
 ---@param x number
@@ -141,6 +129,32 @@ function gauges.drawtext(self, str, x, y, w, h)
         w and math.floor(w),
         h and math.floor(h)
     )
+end
+
+-- Convenience: build a canvas that auto-calls a given gauges.* function
+
+---Create an IUP canvas that draws a specific gauges.* widget each frame.
+---@param t? table            -- canvas creation table
+---@param name string         -- function name inside `gauges` (e.g. "analogcircular")
+---@param ... any             -- parameters passed to that function
+---@return canvas
+function gauges.canvas(t, name, ...)
+    local cv = iup.canvas(t or {})
+    local params = { ... }
+
+    function cv:action()
+        iup.DrawBegin(self)
+        iup.DrawParentBackground(self)
+
+        local fn = gauges[name]
+        if type(fn) == "function" then
+            fn(self, gauges.unpack(params))
+        end
+
+        iup.DrawEnd(self)
+    end
+
+    return cv
 end
 
 return gauges
