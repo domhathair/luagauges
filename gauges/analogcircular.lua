@@ -8,6 +8,7 @@ local gauges = require("gauges")
 ---@field noticks boolean
 ---@field noneedle boolean
 ---@field nodigital boolean
+---@field noframe boolean
 
 ---@class analogcircular_flags
 ---@field size table             -- {w, h} or result of canvas:DrawGetSize()
@@ -44,16 +45,17 @@ function gauges.analogcircular(self, min, max, value, flags)
 
     local w, h    = gauges.unpack(size)
     local cx, cy  = w * 0.5, h * 0.5
-    local radius  = math.min(w, h) * 0.40
+    local radius  = math.min(w, h) * 0.35
     local label_r = radius + math.max(10, math.floor(radius * 0.1)) + 5
+    local frame_r = label_r + math.max(10, math.floor(label_r * 0.1)) + 5
 
     gauges.style(self, color, width, style)
 
     local ratio = gauges.norm(min, max, value)
 
     local function hour_to_deg(hh) return (hh - 3) * 30 end
-    local start_deg = hour_to_deg(8)
-    local end_deg   = hour_to_deg(4)
+    local start_deg = hour_to_deg(7.5)
+    local end_deg   = hour_to_deg(4.5)
     local span_deg  = end_deg - start_deg; if span_deg <= 0 then span_deg = span_deg + 360 end
 
     local function tick_at_angle(angle_deg, r_outer, r_inner, w_override)
@@ -112,6 +114,11 @@ function gauges.analogcircular(self, min, max, value, flags)
         gauges.textstyle(self, { alignment = "ACENTER", wrap = "NO", ellipsis = "YES" }, function()
             gauges.drawtext(self, txt, cx - digw / 2, digy - th / 2, digw, th)
         end)
+    end
+
+    if not m.noframe then
+        gauges.style(self, color, width * 2, style)
+        gauges.drawarc(self, cx - frame_r, cy - frame_r, cx + frame_r, cy + frame_r)
     end
 end
 

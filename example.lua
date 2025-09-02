@@ -18,67 +18,78 @@ if not NDEBUG then
     end
 end
 
-local min, max, cur, t = -1, 1, 0, 0
+local min, max, cur, t = -1.1, 1.1, 0, 0
+local color = ""
 
 local file = ""
 local gauges = {}
 
+--------------------------------------------------------------
+
 file = "gauges/digitmeter.lua"
 gauges = dofile(file)
 
-local cv1 = iup.canvas { expand = "YES" }
+local cv1 = iup.canvas { expand = "YES", border = "YES", label = file }
 function cv1:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
 
-    gauges.digitmeter(self, cur, { format = "%04.1f" })
+    gauges.digitmeter(self, cur, { format = "%04.1f", color = color })
 
     iup.DrawEnd(self)
 end
+
+--------------------------------------------------------------
 
 file = "gauges/analogcircular.lua"
 gauges = dofile(file)
 
-local cv2 = iup.canvas { expand = "YES" }
+local cv2 = iup.canvas { expand = "YES", border = "YES", label = file }
 function cv2:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
 
-    gauges.analogcircular(self, min, max, cur, { format = "%.1f" })
+    gauges.analogcircular(self, min * 10, max * 10, cur * 10, { format = "%d", postfix = "×10⁻¹" })
 
     iup.DrawEnd(self)
 end
+
+--------------------------------------------------------------
 
 file = "gauges/thermometer.lua"
 gauges = dofile(file)
 
-local cv3 = iup.canvas { expand = "YES" }
+local cv3 = iup.canvas { expand = "YES", border = "YES", label = file }
 function cv3:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
 
-    gauges.thermometer(self, min, max, cur, { format = "%.1f" })
+    gauges.thermometer(self, min * 20, max * 20, cur * 20, { format = "%.1f", postfix = "°C" })
 
     iup.DrawEnd(self)
 end
 
+--------------------------------------------------------------
+
 file = "gauges/plot.lua"
 gauges = dofile(file)
 
-local cv4 = iup.canvas { expand = "YES" }
+local cv4 = iup.canvas { expand = "YES", border = "YES", label = file }
 function cv4:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
 
     gauges.plot(self, "A",
-        { xmax = 1000, color = "255 0 0", ymin = min, ymax = max, nostretch = true })
+        { xmax = 1000, color = "255 0 0", ymin = min, ymax = max, nostretch = true, label = "sin(t)|cos(t)" })
     gauges.plot(self, "B",
         { xmax = 1000, color = "0 0 255", ymin = min, ymax = max, nostretch = true, mask = { nobackground = true, noframe = true, nosteps = true } })
 
     iup.DrawEnd(self)
 end
 
-local w, h = 640, 480
+--------------------------------------------------------------
+
+local w, h = 520, 520
 local dlg = iup.dialog {
     iup.hbox {
         iup.vbox {
@@ -90,13 +101,36 @@ local dlg = iup.dialog {
             cv4
         }
     },
-    title = file, minsize = w .. "x" .. h }
+    title = arg[0], minsize = w .. "x" .. h }
+
+local coro = coroutine.create(function()
+    local maxrgb = 255
+    local function set_color(r, g, b) color = r .. " " .. g .. " " .. b end
+
+    while true do
+        for i = 0, maxrgb - 1 do
+            set_color(i, maxrgb - i, 0);
+            coroutine.yield()
+        end
+        for i = 0, maxrgb - 1 do
+            set_color(maxrgb - i, 0, i);
+            coroutine.yield()
+        end
+        for i = 0, maxrgb - 1 do
+            set_color(0, i, maxrgb - i);
+            coroutine.yield()
+        end
+    end
+end)
 
 local fps = 60
 iup.timer {
     time = 1000 / fps,
     run = "YES",
     action_cb = function()
+        if coroutine.status(coro) ~= "running" then
+            coroutine.resume(coro)
+        end
         iup.Update(dlg, 1)
     end
 }

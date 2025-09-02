@@ -85,7 +85,7 @@ function gauges.thermometer(self, min, max, value, flags)
             local zero_y = tube.y2 - (0 - min) / (max - min) * tube.h
             gauges.style(self, tcolor, thinw, "STROKE_DOT")
             if th and tc and zero_y > tc[1] and zero_y < tc[2] then
-                local pad = th / 2 + th * 0.2
+                local pad = tw / 2 + tw * 0.1
                 gauges.drawline(self, tube.x1, zero_y, tube.x1 + tube.w / 2 - pad, zero_y)
                 gauges.drawline(self, tube.x1 + tube.w / 2 + pad, zero_y, tube.x2, zero_y)
             else

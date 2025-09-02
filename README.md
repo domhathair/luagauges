@@ -102,7 +102,7 @@ gauges.analogcircular(canvas, 0, 100, 75, {
 You can run `example.lua` to see all gauges in action.
 
 ```bash
-lua draw.lua
+lua example.lua
 ```
 
 ![](images/example.png)

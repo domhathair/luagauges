@@ -79,7 +79,7 @@ local function mapy(p, h, y) return borderh + (p.ymax - y) / (p.ymax - p.ymin) *
 ---@field xmax number
 ---@field ymin number
 ---@field ymax number
----@field title string
+---@field label string
 ---@field color string
 ---@field width integer
 ---@field nostretch boolean
@@ -108,7 +108,7 @@ function gauges.plot(self, id, flags)
             xmax = flags.xmax or 10,
             ymin = flags.ymin or -1,
             ymax = flags.ymax or 1,
-            title = flags.title or "",
+            label = flags.label or "",
             color = flags.color or "0 0 0",
             width = flags.width or 2,
             style = flags.style or "STROKE",
@@ -163,9 +163,9 @@ function gauges.plot(self, id, flags)
         end)
     end
 
-    if p.title ~= "" then
-        local tw, th = self:DrawGetTextSize(p.title)
-        gauges.drawtext(self, p.title, (w - tw) / 2, 10)
+    if p.label ~= "" then
+        local tw, _ = self:DrawGetTextSize(p.label)
+        gauges.drawtext(self, p.label, (w - tw) / 2, 10)
     end
 
     if flags.mask and flags.mask.nograph then else

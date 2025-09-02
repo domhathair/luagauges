@@ -181,8 +181,8 @@ function gauges.digitmeter(self, value, flags)
     local height  = flags.height or nil
     local scale   = flags.scale or 1.0
     local r_digit = flags.r_digit or 0.56
-    local r_dot   = flags.r_dot or 0.32
-    local r_space = flags.r_space or 0.40
+    local r_dot   = flags.r_dot or 0.56
+    local r_space = flags.r_space or 0.56
 
     local w, h    = gauges.unpack(size)
     local text    = string.format(format, value)
