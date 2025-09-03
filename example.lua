@@ -123,10 +123,9 @@ local coro = coroutine.create(function()
     end
 end)
 
-local fps = 60
-iup.timer {
-    time = 1000 / fps,
-    run = "YES",
+local frame = 60
+local frame_timer = iup.timer {
+    time = 1000 / frame,
     action_cb = function()
         if coroutine.status(coro) ~= "running" then
             coroutine.resume(coro)
@@ -135,12 +134,11 @@ iup.timer {
     end
 }
 
-local time = 4
-iup.timer {
-    time = 10,
-    run = "YES",
+local sys_tick = 4
+local sys_tick_timer = iup.timer {
+    time = sys_tick,
     action_cb = function()
-        t = t + time
+        t = t + sys_tick
 
         local sin = math.sin(math.rad(t))
         local cos = math.cos(math.rad(t))
@@ -152,4 +150,8 @@ iup.timer {
     end
 }
 
-dlg:popup(iup.CENTER, iup.CENTER)
+dlg:showxy(iup.CENTER, iup.CENTER)
+
+frame_timer.run, sys_tick_timer.run = "YES", "YES"
+
+iup.MainLoop()
