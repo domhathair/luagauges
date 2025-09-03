@@ -49,7 +49,7 @@ function cv2:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
 
-    gauges.analogcircular(self, min * 10, max * 10, cur * 10, { format = "%d", postfix = "×10⁻¹" })
+    gauges.analogcircular(self, min * 10, max * 10, math.ceil(cur * 10), { format = "%d", postfix = "×10⁻¹" })
 
     iup.DrawEnd(self)
 end
