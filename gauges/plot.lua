@@ -92,11 +92,12 @@ local function mapy(p, h, y) return borderh + (p.ymax - y) / (p.ymax - p.ymin) *
 ---@param self canvas
 ---@param id any
 ---@param flags? plot_flags
-function gauges.plot(self, id, flags)
+---@param mask? plot_mask
+function gauges.plot(self, id, flags, mask)
     flags = flags or {}
+    mask = mask or {}
 
-    local m = flags.mask or {}
-    if m.nobackground and m.noframe and m.nosteps and m.nograph then return end
+    if mask.nobackground and mask.noframe and mask.nosteps and mask.nograph then return end
 
     local size = flags.size or { self:DrawGetSize() }
     local format = flags.format or "%.1f"
@@ -120,17 +121,17 @@ function gauges.plot(self, id, flags)
     local d = plots[id]
     local w, h = gauges.unpack(size)
 
-    if not m.nobackground then
+    if not mask.nobackground then
         gauges.style(self, "255 255 255", nil, "FILL")
         gauges.drawrectangle(self, 0, 0, w, h)
     end
 
-    if not m.noframe then
+    if not mask.noframe then
         gauges.style(self, "0 0 0", 1, "STROKE")
         gauges.drawrectangle(self, borderw, borderh, w - (borderw / 2), h - borderh)
     end
 
-    if not m.nosteps then
+    if not mask.nosteps then
         gauges.style(self, "180 180 180", 1, "STROKE_DOT")
 
         gauges.textstyle(self, { alignment = "ACENTER", wrap = "NO", ellipsis = "YES" }, function()

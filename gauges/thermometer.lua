@@ -28,11 +28,12 @@ local gauges = require("gauges")
 ---@param max number
 ---@param value number
 ---@param flags? thermometer_flags
-function gauges.thermometer(self, min, max, value, flags)
+---@param mask? thermometer_mask
+function gauges.thermometer(self, min, max, value, flags, mask)
     flags = flags or {}
+    mask = mask or {}
 
-    local m = flags.mask or {}
-    if m.notube and m.nofluid and m.noticks and m.nodigital then return end
+    if mask.notube and mask.nofluid and mask.noticks and mask.nodigital then return end
 
     local size    = flags.size or { self:DrawGetSize() }
     local fcolor  = flags.fluid_color or "200 22 22 200" -- RGBA
@@ -58,7 +59,7 @@ function gauges.thermometer(self, min, max, value, flags)
 
     local ratio   = gauges.norm(min, max, value)
 
-    if not m.nofluid then
+    if not mask.nofluid then
         gauges.style(self, fcolor, thinw, "FILL")
         local fill_y = tube.y2 - ratio * tube.h
         if fill_y < tube.y2 - width then
@@ -67,7 +68,7 @@ function gauges.thermometer(self, min, max, value, flags)
     end
 
     local tw, th, tc = nil, nil, {}
-    if not m.nodigital then
+    if not mask.nodigital then
         gauges.style(self, tcolor, width, style)
         local dig_y = tube.y1 + tube.h / 2
         local txt = string.format(format .. "%s", value, postfix and (" " .. postfix) or "")
@@ -78,7 +79,7 @@ function gauges.thermometer(self, min, max, value, flags)
         tc = { dig_y - th / 2, dig_y + th / 2 }
     end
 
-    if not m.notube then
+    if not mask.notube then
         gauges.style(self, tcolor, width, style)
         gauges.drawrectangle(self, tube.x1, tube.y1, tube.x2, tube.y2)
         if min < 0 then
@@ -94,7 +95,7 @@ function gauges.thermometer(self, min, max, value, flags)
         end
     end
 
-    if not m.noticks then
+    if not mask.noticks then
         gauges.style(self, tcolor, thinw, style)
         local step_h    = tube.h / major
         local sub_step  = (minor > 0) and (step_h / minor) or 0

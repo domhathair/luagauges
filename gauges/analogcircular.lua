@@ -28,11 +28,12 @@ local gauges = require("gauges")
 ---@param max number
 ---@param value number
 ---@param flags? analogcircular_flags
-function gauges.analogcircular(self, min, max, value, flags)
+---@param mask? analogcircular_mask
+function gauges.analogcircular(self, min, max, value, flags, mask)
     flags = flags or {}
+    mask = mask or {}
 
-    local m = flags.mask or {}
-    if m.noarc and m.noticks and m.noneedle and m.nodigital then return end
+    if mask.noarc and mask.noticks and mask.noneedle and mask.nodigital then return end
 
     local size    = flags.size or { self:DrawGetSize() }
     local color   = flags.color or iup.GetGlobal("TXTFGCOLOR")
@@ -69,7 +70,7 @@ function gauges.analogcircular(self, min, max, value, flags)
         gauges.style(self, color, width, style)
     end
 
-    if not m.noarc then
+    if not mask.noarc then
         local a1, a2 = 360 - end_deg, 360 - start_deg -- counter-clockwise from 3 o'clock
         gauges.drawarc(self, cx - radius, cy - radius, cx + radius, cy + radius, a1, a2)
     end
@@ -77,7 +78,7 @@ function gauges.analogcircular(self, min, max, value, flags)
     local major_len = math.max(8, math.floor(radius * 0.12))
     local minor_len = math.max(4, math.floor(radius * 0.06))
 
-    if not m.noticks then
+    if not mask.noticks then
         for i = 0, major do
             local ang = start_deg + (span_deg / major) * i
             tick_at_angle(ang, radius, radius - major_len, width)
@@ -98,7 +99,7 @@ function gauges.analogcircular(self, min, max, value, flags)
         end
     end
 
-    if not m.noneedle then
+    if not mask.noneedle then
         local needle_ang = start_deg + span_deg * ratio
         local needle_r   = radius - major_len - 6
         gauges.drawline(self, cx, cy, cx + needle_r * math.cos(math.rad(needle_ang)),
@@ -106,7 +107,7 @@ function gauges.analogcircular(self, min, max, value, flags)
         gauges.drawarc(self, cx - width, cy - width, cx + width, cy + width)
     end
 
-    if not m.nodigital then
+    if not mask.nodigital then
         local digy  = cy + label_r * math.sin(math.rad(start_deg))
         local digw  = math.abs(label_r * math.cos(math.rad(start_deg))) * 2
         local txt   = string.format(format .. "%s", value, postfix and (" " .. postfix) or "")
@@ -116,7 +117,7 @@ function gauges.analogcircular(self, min, max, value, flags)
         end)
     end
 
-    if not m.noframe then
+    if not mask.noframe then
         gauges.style(self, color, width * 2, style)
         gauges.drawarc(self, cx - frame_r, cy - frame_r, cx + frame_r, cy + frame_r)
     end

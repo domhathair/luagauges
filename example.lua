@@ -82,7 +82,8 @@ function cv4:action()
     gauges.plot(self, "A",
         { xmax = 1000, color = "255 0 0", ymin = min, ymax = max, nostretch = true, label = "sin(t)|cos(t)" })
     gauges.plot(self, "B",
-        { xmax = 1000, color = "0 0 255", ymin = min, ymax = max, nostretch = true, mask = { nobackground = true, noframe = true, nosteps = true } })
+        { xmax = 1000, color = "0 0 255", ymin = min, ymax = max, nostretch = true },
+        { nobackground = true, noframe = true, nosteps = true })
 
     iup.DrawEnd(self)
 end
