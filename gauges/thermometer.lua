@@ -33,6 +33,10 @@ function gauges.thermometer(self, min, max, value, flags, mask)
     flags = flags or {}
     mask = mask or {}
 
+    if max <= min then
+        max = min + 1
+    end
+
     if mask.notube and mask.nofluid and mask.noticks and mask.nodigital then return end
 
     local size    = flags.size or { self:DrawGetSize() }

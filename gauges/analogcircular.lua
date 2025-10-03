@@ -8,7 +8,6 @@ local gauges = require("gauges")
 ---@field noticks boolean
 ---@field noneedle boolean
 ---@field nodigital boolean
----@field noframe boolean
 
 ---@class analogcircular_flags
 ---@field size table             -- {w, h} or result of canvas:DrawGetSize()
@@ -33,6 +32,10 @@ function gauges.analogcircular(self, min, max, value, flags, mask)
     flags = flags or {}
     mask = mask or {}
 
+    if max <= min then
+        max = min + 1
+    end
+
     if mask.noarc and mask.noticks and mask.noneedle and mask.nodigital then return end
 
     local size    = flags.size or { self:DrawGetSize() }
@@ -47,17 +50,23 @@ function gauges.analogcircular(self, min, max, value, flags, mask)
     local w, h    = gauges.unpack(size)
     local cx, cy  = w * 0.5, h * 0.5
     local radius  = math.min(w, h) * 0.35
-    local label_r = radius + math.max(10, math.floor(radius * 0.1)) + 5
-    local frame_r = label_r + math.max(10, math.floor(label_r * 0.1)) + 5
+    local label_r = radius + math.max(10, math.floor(radius * 0.1)) + (width * 2)
+    local frame_r = label_r + math.max(10, math.floor(label_r * 0.1)) + (width * 2)
 
     gauges.style(self, color, width, style)
 
     local ratio = gauges.norm(min, max, value)
 
-    local function hour_to_deg(hh) return (hh - 3) * 30 end
+    local function hour_to_deg(hh)
+        return (hh - 3) * 30
+    end
+
     local start_deg = hour_to_deg(7.5)
     local end_deg   = hour_to_deg(4.5)
-    local span_deg  = end_deg - start_deg; if span_deg <= 0 then span_deg = span_deg + 360 end
+    local span_deg  = end_deg - start_deg
+    if span_deg <= 0 then
+        span_deg = span_deg + 360
+    end
 
     local function tick_at_angle(angle_deg, r_outer, r_inner, w_override)
         local rad = math.rad(angle_deg)
@@ -83,12 +92,28 @@ function gauges.analogcircular(self, min, max, value, flags, mask)
             local ang = start_deg + (span_deg / major) * i
             tick_at_angle(ang, radius, radius - major_len, width)
 
-            local lx = cx + label_r * math.cos(math.rad(ang))
-            local ly = cy + label_r * math.sin(math.rad(ang))
             local val = min + (max - min) * (i / major)
             local txt = string.format(format, (format == "%d") and math.floor(val + 0.5) or val)
             local tw, th = self:DrawGetTextSize(txt)
-            gauges.drawtext(self, txt, lx - tw / 2, ly - th / 2)
+
+            local lx = cx + label_r * math.cos(math.rad(ang))
+            local ly = cy + label_r * math.sin(math.rad(ang))
+
+            local function tcor(a, x, y)
+                a = (360 - a) % 360
+
+                if a > 90 and a < 270 then
+                    return x - y
+                elseif math.ceil(a) == 90 or math.ceil(a) == 270 then
+                    return x - y / 2
+                else
+                    return x
+                end
+            end
+
+            gauges.textstyle(self, { alignment = "ACENTER", wrap = "NO", ellipsis = "NO" }, function()
+                gauges.drawtext(self, txt, tcor(ang, lx, tw), ly - th / 2)
+            end)
 
             if i < major and minor > 0 then
                 for j = 1, minor - 1 do
@@ -108,18 +133,13 @@ function gauges.analogcircular(self, min, max, value, flags, mask)
     end
 
     if not mask.nodigital then
-        local digy  = cy + label_r * math.sin(math.rad(start_deg))
-        local digw  = math.abs(label_r * math.cos(math.rad(start_deg))) * 2
+        local digy  = cy + (label_r * 0.9) * math.sin(math.rad(hour_to_deg(6.0)))
         local txt   = string.format(format .. "%s", value, postfix and (" " .. postfix) or "")
         local _, th = self:DrawGetTextSize(txt)
+        local realw = math.sqrt(frame_r ^ 2 - (digy - cy + th / 2) ^ 2)
         gauges.textstyle(self, { alignment = "ACENTER", wrap = "NO", ellipsis = "YES" }, function()
-            gauges.drawtext(self, txt, cx - digw / 2, digy - th / 2, digw, th)
+            gauges.drawtext(self, txt, cx - realw, digy - th / 2, realw * 2, th)
         end)
-    end
-
-    if not mask.noframe then
-        gauges.style(self, color, width * 2, style)
-        gauges.drawarc(self, cx - frame_r, cy - frame_r, cx + frame_r, cy + frame_r)
     end
 end
 
