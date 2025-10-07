@@ -19,7 +19,7 @@ local gauges = require("gauges")
 ---@field format string
 ---@field major_ticks integer
 ---@field minor_ticks integer
----@field mask thermometer_mask
+---@field divider number         -- min, max and value divider
 
 ---Draw a vertical thermometer.
 ---![](../images/thermometer.png)
@@ -39,29 +39,35 @@ function gauges.thermometer(self, min, max, value, flags, mask)
 
     if mask.notube and mask.nofluid and mask.noticks and mask.nodigital then return end
 
-    local size    = flags.size or { self:DrawGetSize() }
-    local fcolor  = flags.fluid_color or "200 22 22 200" -- RGBA
-    local tcolor  = flags.tube_color or iup.GetGlobal("TXTFGCOLOR")
-    local width   = flags.width or 2
-    local style   = flags.style or "STROKE"
-    local postfix = flags.postfix
-    local format  = flags.format or "%.1f"
-    local major   = math.max(1, flags.major_ticks or 10)
-    local minor   = math.max(0, flags.minor_ticks or 5)
+    local size      = flags.size or { self:DrawGetSize() }
+    local fcolor    = flags.fluid_color or "200 22 22 200" -- RGBA
+    local tcolor    = flags.tube_color or iup.GetGlobal("TXTFGCOLOR")
+    local width     = flags.width or 2
+    local style     = flags.style or "STROKE"
+    local postfix   = flags.postfix
+    local format    = flags.format or "%.1f"
+    local major     = math.max(1, flags.major_ticks or 10)
+    local minor     = math.max(0, flags.minor_ticks or 5)
+    local divider   = flags.divider or 1
 
-    local w, h    = gauges.unpack(size)
-    local thinw   = math.max(1, math.floor(width / 2))
+    min, max, value =
+        min / divider,
+        max / divider,
+        value / divider
 
-    local margin  = math.floor(w * 0.10)
-    local tube    = {}
-    tube.w        = (w / 2) - margin
-    tube.h        = h * 0.8
-    tube.x1       = margin
-    tube.y1       = h * 0.1
-    tube.x2       = tube.x1 + tube.w
-    tube.y2       = tube.y1 + tube.h
+    local w, h      = gauges.unpack(size)
+    local thinw     = math.max(1, math.floor(width / 2))
 
-    local ratio   = gauges.norm(min, max, value)
+    local margin    = math.floor(w * 0.10)
+    local tube      = {}
+    tube.w          = (w / 2) - margin
+    tube.h          = h * 0.8
+    tube.x1         = margin
+    tube.y1         = h * 0.1
+    tube.x2         = tube.x1 + tube.w
+    tube.y2         = tube.y1 + tube.h
+
+    local ratio     = gauges.norm(min, max, value)
 
     if not mask.nofluid then
         gauges.style(self, fcolor, thinw, "FILL")

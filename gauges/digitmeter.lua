@@ -164,6 +164,7 @@ end
 ---@field r_digit number     -- width/height ratio for digits
 ---@field r_dot number       -- width/height ratio for '.'
 ---@field r_space number     -- width/height ratio for ' '
+---@field divider number         -- min, max and value divider
 
 ---Draw seven-seg style text/number centered inside bounds.
 ---![](../images/digitmeter.png)
@@ -183,6 +184,9 @@ function gauges.digitmeter(self, value, flags)
     local r_digit = flags.r_digit or 0.56
     local r_dot   = flags.r_dot or 0.56
     local r_space = flags.r_space or 0.56
+    local divider = flags.divider or 1
+
+    value         = value / divider
 
     local w, h    = gauges.unpack(size)
     local text    = string.format(format, value)
