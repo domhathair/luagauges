@@ -29,7 +29,7 @@ local gauges = {}
 file = "gauges/digitmeter.lua"
 gauges = dofile(file)
 
-local cv1 = iup.canvas { expand = "YES", border = "YES", label = file }
+local cv1 = iup.canvas { expand = "YES", border = "NO", label = file }
 function cv1:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
@@ -44,7 +44,7 @@ end
 file = "gauges/analogcircular.lua"
 gauges = dofile(file)
 
-local cv2 = iup.canvas { expand = "YES", border = "YES", label = file }
+local cv2 = iup.canvas { expand = "YES", border = "NO", label = file }
 function cv2:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
@@ -59,7 +59,7 @@ end
 file = "gauges/thermometer.lua"
 gauges = dofile(file)
 
-local cv3 = iup.canvas { expand = "YES", border = "YES", label = file }
+local cv3 = iup.canvas { expand = "YES", border = "NO", label = file }
 function cv3:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
@@ -74,13 +74,14 @@ end
 file = "gauges/plot.lua"
 gauges = dofile(file)
 
-local cv4 = iup.canvas { expand = "YES", border = "YES", label = file }
+local cv4 = iup.canvas { expand = "YES", border = "NO", label = file }
 function cv4:action()
     iup.DrawBegin(self)
     iup.DrawParentBackground(self)
 
     gauges.plot(self, "A",
-        { xmax = 1000, color = "255 0 0", ymin = min, ymax = max, nostretch = true, label = "sin(t)|cos(t)" })
+        { xmax = 1000, color = "255 0 0", ymin = min, ymax = max, nostretch = true, label = "sin(t)|cos(t)" },
+        { nobackground = true })
     gauges.plot(self, "B",
         { xmax = 1000, color = "0 0 255", ymin = min, ymax = max, nostretch = true },
         { nobackground = true, noframe = true, nosteps = true })
@@ -93,13 +94,16 @@ end
 local w, h = 520, 520
 local dlg = iup.dialog {
     iup.hbox {
+        gap = "8",
+        margin = "8x8",
+
         iup.vbox {
-            cv1,
-            cv2,
+            iup.frame { title = cv1.label, cv1 },
+            iup.frame { title = cv2.label, cv2 },
         },
         iup.vbox {
-            cv3,
-            cv4
+            iup.frame { title = cv3.label, cv3 },
+            iup.frame { title = cv4.label, cv4 }
         }
     },
     title = arg[0], minsize = w .. "x" .. h }

@@ -12,7 +12,6 @@
     ———d———
 ]]
 
-local iup = require("iuplua")
 local gauges = require("gauges")
 
 ---Alexander Fakoó's Siekoo alphabet
@@ -153,6 +152,9 @@ local function draw_ch(self, ch, x, y, w, h)
     end
 end
 
+---@class digitmeter_mask
+---@field nodigital boolean
+
 ---@class digitmeter_flags
 ---@field size table
 ---@field color string
@@ -171,8 +173,12 @@ end
 ---@param self canvas
 ---@param value any
 ---@param flags? digitmeter_flags
-function gauges.digitmeter(self, value, flags)
+---@param mask? digitmeter_mask
+---@param action_cb? function
+function gauges.digitmeter(self, value, flags, mask, action_cb)
     flags         = flags or {}
+    mask          = mask or {}
+    action_cb     = action_cb or function(...) return nil end
 
     local size    = flags.size or { self:DrawGetSize() }
     local format  = flags.format or "%d"
@@ -188,10 +194,14 @@ function gauges.digitmeter(self, value, flags)
 
     value         = value / divider
 
-    local w, h    = gauges.unpack(size)
     local text    = string.format(format, value)
     local n       = #text
-    if n == 0 then return end
+
+    if n == 0 or mask.nodigital then
+        return action_cb(self, value, flags)
+    end
+
+    local w, h  = gauges.unpack(size)
 
     local units = 0.0
     for i = 1, n do
@@ -245,6 +255,8 @@ function gauges.digitmeter(self, value, flags)
         draw_ch(self, text:sub(i, i), x, starty, cellw[i], chh)
         x = x + cellw[i] + ((i < n) and gap or 0)
     end
+
+    return action_cb(self, value, flags)
 end
 
 return gauges

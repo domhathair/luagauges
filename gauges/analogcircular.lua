@@ -1,6 +1,5 @@
 ---analogcircular.lua
 
-local iup = require("iuplua")
 local gauges = require("gauges")
 
 ---@class analogcircular_mask
@@ -28,15 +27,19 @@ local gauges = require("gauges")
 ---@param value number
 ---@param flags? analogcircular_flags
 ---@param mask? analogcircular_mask
-function gauges.analogcircular(self, min, max, value, flags, mask)
+---@param action_cb? function
+function gauges.analogcircular(self, min, max, value, flags, mask, action_cb)
     flags = flags or {}
     mask = mask or {}
+    action_cb = action_cb or function(...) return nil end
 
     if max <= min then
         max = min + 1
     end
 
-    if mask.noarc and mask.noticks and mask.noneedle and mask.nodigital then return end
+    if mask.noarc and mask.noticks and mask.noneedle and mask.nodigital then
+        return action_cb(self, min, max, value, flags, mask)
+    end
 
     local size      = flags.size or { self:DrawGetSize() }
     local color     = flags.color or iup.GetGlobal("TXTFGCOLOR")
@@ -147,6 +150,8 @@ function gauges.analogcircular(self, min, max, value, flags, mask)
             gauges.drawtext(self, txt, cx - realw, digy - th / 2, realw * 2, th)
         end)
     end
+
+    return action_cb(self, min, max, value, flags, mask)
 end
 
 return gauges

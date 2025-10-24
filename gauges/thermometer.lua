@@ -1,6 +1,5 @@
 ---thermometer.lua
 
-local iup = require("iuplua")
 local gauges = require("gauges")
 
 ---@class thermometer_mask
@@ -29,18 +28,22 @@ local gauges = require("gauges")
 ---@param value number
 ---@param flags? thermometer_flags
 ---@param mask? thermometer_mask
-function gauges.thermometer(self, min, max, value, flags, mask)
+---@param action_cb? function
+function gauges.thermometer(self, min, max, value, flags, mask, action_cb)
     flags = flags or {}
     mask = mask or {}
+    action_cb = action_cb or function(...) return nil end
 
     if max <= min then
         max = min + 1
     end
 
-    if mask.notube and mask.nofluid and mask.noticks and mask.nodigital then return end
+    if mask.notube and mask.nofluid and mask.noticks and mask.nodigital then
+        return action_cb(self, min, max, value, flags, mask)
+    end
 
     local size      = flags.size or { self:DrawGetSize() }
-    local fcolor    = flags.fluid_color or "200 22 22 200" -- RGBA
+    local fcolor    = flags.fluid_color or "200 22 22" -- RGBA
     local tcolor    = flags.tube_color or iup.GetGlobal("TXTFGCOLOR")
     local width     = flags.width or 2
     local style     = flags.style or "STROKE"
@@ -58,14 +61,20 @@ function gauges.thermometer(self, min, max, value, flags, mask)
     local w, h      = gauges.unpack(size)
     local thinw     = math.max(1, math.floor(width / 2))
 
-    local margin    = math.floor(w * 0.10)
+    local atan2     = math.atan2 or math.atan
+    local margin    = math.floor(w * 0.05)
     local tube      = {}
-    tube.w          = (w / 2) - margin
-    tube.h          = h * 0.8
-    tube.x1         = margin
-    tube.y1         = h * 0.1
+    tube.h          = (h - margin * 2) * 0.8
+    tube.w          = tube.h * 0.2
+    tube.x1         = w / 2 - tube.w
+    tube.y1         = margin
     tube.x2         = tube.x1 + tube.w
     tube.y2         = tube.y1 + tube.h
+    tube.xc         = tube.x1 + tube.w / 2
+    tube.yc         = tube.y2 + tube.w / 2
+    tube.r          = math.sqrt((tube.x1 - tube.xc) ^ 2 + (tube.y2 - tube.yc) ^ 2)
+    tube.o1         = 360 - math.deg(atan2(tube.y2 - tube.yc, tube.x1 - tube.xc))
+    tube.o2         = 360 - math.deg(atan2(tube.y2 - tube.yc, tube.x2 - tube.xc))
 
     local ratio     = gauges.norm(min, max, value)
 
@@ -75,33 +84,30 @@ function gauges.thermometer(self, min, max, value, flags, mask)
         if fill_y < tube.y2 - width then
             gauges.drawrectangle(self, tube.x1 + thinw, fill_y, tube.x2 - width, tube.y2 - width)
         end
+        gauges.drawarc(self, tube.xc - tube.r, tube.yc - tube.r, tube.xc + tube.r, tube.yc + tube.r, tube.o1, tube.o2)
+        gauges.drawrectangle(self, tube.x1 + thinw, tube.y2 - width, tube.x2 - width, tube.yc)
     end
 
-    local tw, th, tc = nil, nil, {}
     if not mask.nodigital then
         gauges.style(self, tcolor, width, style)
         local dig_y = tube.y1 + tube.h / 2
         local txt = string.format(format .. "%s", value, postfix and (" " .. postfix) or "")
-        tw, th = self:DrawGetTextSize(txt)
-        gauges.textstyle(self, { alignment = "ACENTER", wrap = "NO", ellipsis = "YES" }, function()
-            gauges.drawtext(self, txt, tube.x1, dig_y - th / 2, tube.w, th)
+        local _, th = self:DrawGetTextSize(txt)
+        gauges.textstyle(self, { alignment = "ARIGHT", wrap = "NO", ellipsis = "YES" }, function()
+            gauges.drawtext(self, txt, 0, dig_y - th / 2, tube.x1 * 0.95, th)
         end)
-        tc = { dig_y - th / 2, dig_y + th / 2 }
     end
 
     if not mask.notube then
         gauges.style(self, tcolor, width, style)
-        gauges.drawrectangle(self, tube.x1, tube.y1, tube.x2, tube.y2)
+        gauges.drawline(self, tube.x1, tube.y2, tube.x1, tube.y1)
+        gauges.drawline(self, tube.x1, tube.y1, tube.x2, tube.y1)
+        gauges.drawline(self, tube.x2, tube.y1, tube.x2, tube.y2)
+        gauges.drawarc(self, tube.xc - tube.r, tube.yc - tube.r, tube.xc + tube.r, tube.yc + tube.r, tube.o1, tube.o2)
         if min < 0 then
             local zero_y = tube.y2 - (0 - min) / (max - min) * tube.h
             gauges.style(self, tcolor, thinw, "STROKE_DOT")
-            if th and tc and zero_y > tc[1] and zero_y < tc[2] then
-                local pad = tw / 2 + tw * 0.1
-                gauges.drawline(self, tube.x1, zero_y, tube.x1 + tube.w / 2 - pad, zero_y)
-                gauges.drawline(self, tube.x1 + tube.w / 2 + pad, zero_y, tube.x2, zero_y)
-            else
-                gauges.drawline(self, tube.x1, zero_y, tube.x2, zero_y)
-            end
+            gauges.drawline(self, tube.x1, zero_y, tube.x2, zero_y)
         end
     end
 
@@ -118,7 +124,7 @@ function gauges.thermometer(self, min, max, value, flags, mask)
             gauges.drawline(self, tube.x2 + shift, y, tube.x2 + shift + major_len, y)
             local val = min + (max - min) * (i / major)
             local txt = string.format(format, (format == "%d") and math.floor(val + 0.5) or val)
-            tw, th = self:DrawGetTextSize(txt)
+            local _, th = self:DrawGetTextSize(txt)
             gauges.drawtext(self, txt, tube.x2 + shift + major_len + shift, y - th / 2)
 
             if i < major and minor > 0 then
@@ -129,6 +135,8 @@ function gauges.thermometer(self, min, max, value, flags, mask)
             end
         end
     end
+
+    return action_cb(self, min, max, value, flags, mask)
 end
 
 return gauges

@@ -1,6 +1,5 @@
 -- plot.lua
 
-local iup = require("iuplua")
 local gauges = require("gauges")
 
 local plots = {}  -- id -> {data={}, xmin, xmax, ymin, ymax}
@@ -93,11 +92,15 @@ local function mapy(p, h, y) return borderh + (p.ymax - y) / (p.ymax - p.ymin) *
 ---@param id any
 ---@param flags? plot_flags
 ---@param mask? plot_mask
-function gauges.plot(self, id, flags, mask)
+---@param action_cb? function
+function gauges.plot(self, id, flags, mask, action_cb)
     flags = flags or {}
     mask = mask or {}
+    action_cb = action_cb or function(...) return nil end
 
-    if mask.nobackground and mask.noframe and mask.nosteps and mask.nograph then return end
+    if mask.nobackground and mask.noframe and mask.nosteps and mask.nograph then
+        return action_cb(self, id, flags, mask)
+    end
 
     local size = flags.size or { self:DrawGetSize() }
     local format = flags.format or "%.1f"
@@ -172,7 +175,10 @@ function gauges.plot(self, id, flags, mask)
     if flags.mask and flags.mask.nograph then else
         gauges.style(self, p.color, p.width, p.style)
 
-        if not d or #d < 2 then return end
+        if not d or #d < 2 then
+            return action_cb(self, id, flags, mask)
+        end
+
         local px, py = mapx(p, w, d[1][1]), mapy(p, h, d[1][2])
         for i = 2, #d do
             local sx, sy = mapx(p, w, d[i][1]), mapy(p, h, d[i][2])
@@ -190,6 +196,8 @@ function gauges.plot(self, id, flags, mask)
             px, py = sx, sy
         end
     end
+
+    return action_cb(self, id, flags, mask)
 end
 
 return gauges
