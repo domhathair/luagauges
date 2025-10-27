@@ -159,14 +159,14 @@ end
 ---@field size table
 ---@field color string
 ---@field format string
----@field spacing number     -- gap factor relative to char height (0..1)
+---@field spacing number   -- gap factor relative to char height (0..1)
 ---@field margin integer
 ---@field height integer
 ---@field scale number
----@field r_digit number     -- width/height ratio for digits
----@field r_dot number       -- width/height ratio for '.'
----@field r_space number     -- width/height ratio for ' '
----@field divider number         -- min, max and value divider
+---@field r_digit number   -- width/height ratio for digits
+---@field r_dot number     -- width/height ratio for '.'
+---@field r_space number   -- width/height ratio for ' '
+---@field divider number   -- value divider
 
 ---Draw seven-seg style text/number centered inside bounds.
 ---![](../images/digitmeter.png)
@@ -190,12 +190,14 @@ function gauges.digitmeter(self, value, flags, mask, action_cb)
     local r_digit = flags.r_digit or 0.56
     local r_dot   = flags.r_dot or 0.56
     local r_space = flags.r_space or 0.56
-    local divider = flags.divider or 1
+    local divider = flags.divider and (flags.divider > 0 and flags.divider) or nil
 
-    value         = value / divider
+    if divider then
+        value = value / divider
+    end
 
-    local text    = string.format(format, value)
-    local n       = #text
+    local text = string.format(format, value)
+    local n    = #text
 
     if n == 0 or mask.nodigital then
         return action_cb(self, value, flags)

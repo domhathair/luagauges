@@ -10,15 +10,15 @@ local gauges = require("gauges")
 
 ---@class thermometer_flags
 ---@field size table
----@field fluid_color string     -- RGBA string for fluid
----@field tube_color string      -- stroke color for tube & ticks
+---@field fluid_color string  -- RGB string for fluid
+---@field tube_color string   -- stroke color for tube & ticks
 ---@field width integer
 ---@field style canvas.style
 ---@field postfix string
 ---@field format string
 ---@field major_ticks integer
 ---@field minor_ticks integer
----@field divider number         -- min, max and value divider
+---@field divider number      -- min, max and value divider
 
 ---Draw a vertical thermometer.
 ---![](../images/thermometer.png)
@@ -43,7 +43,7 @@ function gauges.thermometer(self, min, max, value, flags, mask, action_cb)
     end
 
     local size      = flags.size or { self:DrawGetSize() }
-    local fcolor    = flags.fluid_color or "200 22 22" -- RGBA
+    local fcolor    = flags.fluid_color or "200 22 22" -- RGB
     local tcolor    = flags.tube_color or iup.GetGlobal("TXTFGCOLOR")
     local width     = flags.width or 2
     local style     = flags.style or "STROKE"
@@ -51,7 +51,7 @@ function gauges.thermometer(self, min, max, value, flags, mask, action_cb)
     local format    = flags.format or "%.1f"
     local major     = math.max(1, flags.major_ticks or 10)
     local minor     = math.max(0, flags.minor_ticks or 5)
-    local divider   = flags.divider or 1
+    local divider   = flags.divider and (flags.divider > 0 and flags.divider) or 1
 
     min, max, value =
         min / divider,
@@ -62,7 +62,7 @@ function gauges.thermometer(self, min, max, value, flags, mask, action_cb)
     local thinw     = math.max(1, math.floor(width / 2))
 
     local atan2     = math.atan2 or math.atan
-    local margin    = math.floor(w * 0.05)
+    local margin    = math.floor(h * 0.05)
     local tube      = {}
     tube.h          = (h - margin * 2) * 0.8
     tube.w          = tube.h * 0.2
@@ -113,19 +113,24 @@ function gauges.thermometer(self, min, max, value, flags, mask, action_cb)
 
     if not mask.noticks then
         gauges.style(self, tcolor, thinw, style)
-        local step_h    = tube.h / major
-        local sub_step  = (minor > 0) and (step_h / minor) or 0
-        local major_len = math.max(8, math.floor(tube.w * 0.08))
-        local minor_len = math.max(4, math.floor(tube.w * 0.025))
-        local shift     = math.max(4, math.floor(tube.w * 0.025))
+        local step_h        = tube.h / major
+        local sub_step      = (minor > 0) and (step_h / minor) or 0
+        local major_len     = math.max(8, math.floor(tube.w * 0.08))
+        local minor_len     = math.max(4, math.floor(tube.w * 0.025))
+        local shift         = math.max(4, math.floor(tube.w * 0.025))
 
+        local prevy, prevth = nil, nil
         for i = 0, major do
             local y = tube.y2 - i * step_h
             gauges.drawline(self, tube.x2 + shift, y, tube.x2 + shift + major_len, y)
             local val = min + (max - min) * (i / major)
             local txt = string.format(format, (format == "%d") and math.floor(val + 0.5) or val)
             local _, th = self:DrawGetTextSize(txt)
-            gauges.drawtext(self, txt, tube.x2 + shift + major_len + shift, y - th / 2)
+            local ty = y - th / 2
+            if not (prevy and prevth) or ty < prevy - prevth - 1 then
+                gauges.drawtext(self, txt, tube.x2 + shift + major_len + shift, ty)
+                prevy, prevth = y, th
+            end
 
             if i < major and minor > 0 then
                 for j = 1, minor - 1 do

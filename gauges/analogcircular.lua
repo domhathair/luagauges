@@ -9,15 +9,15 @@ local gauges = require("gauges")
 ---@field nodigital boolean
 
 ---@class analogcircular_flags
----@field size table             -- {w, h} or result of canvas:DrawGetSize()
----@field color string           -- draw color (text/lines)
----@field width integer          -- stroke width
----@field style canvas.style     -- "STROKE" or "FILL" styles
----@field postfix string         -- unit suffix for digital text
----@field format string          -- lua string.format format for labels
----@field major_ticks integer    -- major tick count
----@field minor_ticks integer    -- minor ticks between majors
----@field divider number         -- min, max and value divider
+---@field size table           -- {w, h} or result of canvas:DrawGetSize()
+---@field color string         -- draw color (text/lines)
+---@field width integer        -- stroke width
+---@field style canvas.style   -- "STROKE" or "FILL" styles
+---@field postfix string       -- unit suffix for digital text
+---@field format string        -- lua string.format format for labels
+---@field major_ticks integer  -- major tick count
+---@field minor_ticks integer  -- minor ticks between majors
+---@field divider number       -- min, max and value divider
 
 ---Draw a circular analog gauge.
 ---![](../images/analogcircular.png)
@@ -49,7 +49,7 @@ function gauges.analogcircular(self, min, max, value, flags, mask, action_cb)
     local format    = flags.format or "%d"
     local major     = math.max(1, flags.major_ticks or 10)
     local minor     = math.max(0, flags.minor_ticks or 5)
-    local divider   = flags.divider or 1
+    local divider   = flags.divider and (flags.divider > 0 and flags.divider) or 1
 
     min, max, value =
         min / divider,
