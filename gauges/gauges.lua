@@ -23,6 +23,20 @@ function gauges.unpack(...)
     return fn(...)
 end
 
+---@return
+---| "\\" # Windows
+---| "/"  # Posix
+function gauges.sep()
+    return package.config:sub(1, 1)
+end
+
+---@return
+---| "windows"
+---| "posix"
+function gauges.osinuse()
+    return gauges.sep() == "\\" and "windows" or "posix"
+end
+
 -- Canvas helpers (typed wrappers around IUP Draw* API)
 
 ---Set draw color/width/style on canvas.
@@ -102,7 +116,7 @@ function gauges.drawarc(self, x1, y1, x2, y2, a1, a2)
         math.floor(x2),
         math.floor(y2),
         a1 or 0,
-        a2 or 360
+        a2 and (a2 + (gauges.osinuse() == "windows" and 360 or 0)) or 360
     )
 end
 

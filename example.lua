@@ -135,7 +135,7 @@ local frame_timer = iup.timer {
         if coroutine.status(coro) ~= "running" then
             coroutine.resume(coro)
         end
-        iup.Update(dlg, 1)
+        iup.UpdateChildren(dlg)
     end
 }
 
